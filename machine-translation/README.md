@@ -28,6 +28,7 @@ So then I built it from scratch by cloning, see docs [here](https://huggingface.
 
 ## Directory layout
 
+```
 machine-translation/
 ├── data/
 │   ├── load_data.py          # Data loading and preprocessing scripts
@@ -48,6 +49,7 @@ machine-translation/
 ├── launch.sh                 # Shell script to run training
 ├── requirements.txt          # Python dependencies
 ├── README.md                 # Project documentation
+```
 
 ## Launching training
 
