@@ -12,14 +12,14 @@ module load gcc/12.3.0
 module load mvapich2/2.3.7-1
 module load cuda/12.1.1
 
-echo "Launching Training"
+echo "Launching Training for" $baseline
 
 EXP_NAME='baseline'
 D_MODEL=256
 NUM_LAYERS=4
 NUM_HEADS=4
 D_FF=1024
-MAX_SEQ_LENGTH=100
+MAX_SEQ_LENGTH=128
 EPOCHS=5
 LEARNING_RATE=5e-5
 BATCH_SIZE=16

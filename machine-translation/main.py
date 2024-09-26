@@ -30,6 +30,7 @@ def main():
 
     # check if specified device is available, defautls to mps if not
     device = args.device if torch.cuda.is_available() and args.device=='cuda' else 'mps'
+    print(f"Using device {device}")
 
     print("Loading data")
     tokenizer = make_tokenizer()
