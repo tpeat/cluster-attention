@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -JSNN-exp
+#SBATCH -JNLP-exp
 #SBATCH -N1 -n1
 #SBATCH --mem-per-gpu 30GB
 #SBATCH -G A100:1
@@ -12,20 +12,21 @@ module load gcc/12.3.0
 module load mvapich2/2.3.7-1
 module load cuda/12.1.1
 
-echo "Launching Training for" $baseline
+# experiment name
+EXP_NAME='baseline_e30'
 
-EXP_NAME='baseline'
+echo "Launching Training for" $EXP_NAME
+
 D_MODEL=256
 NUM_LAYERS=4
 NUM_HEADS=4
 D_FF=1024
 MAX_SEQ_LENGTH=128
-EPOCHS=5
+EPOCHS=30
 LEARNING_RATE=5e-5
 BATCH_SIZE=16
 DEVICE='cuda'
-
-echo $EXP_NAME
+TOKENIZER_TYPE='MBart'
 
  ~/.conda/envs/torch/bin/python main.py \
     --exp_name $EXP_NAME \
@@ -37,4 +38,5 @@ echo $EXP_NAME
     --epochs $EPOCHS \
     --learning_rate $LEARNING_RATE \
     --batch_size $BATCH_SIZE \
-    --device $DEVICE
+    --device $DEVICE \
+    --tokenizer-name $TOKENIZER_TYPE

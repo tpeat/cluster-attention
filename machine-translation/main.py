@@ -20,8 +20,8 @@ def parse_args():
     parser.add_argument('--epochs', type=int, default=10, help='Number of training epochs')
     parser.add_argument('--learning_rate', type=float, default=1e-4, help='Learning rate')
     parser.add_argument('--batch_size', type=int, default=32, help='Batch size for training and validation')
-    parser.add_argument('--device', type=str, default='mps', help='Device to use for training, defautl apple')
-
+    parser.add_argument('--device', type=str, default='cuda', help='Device to use for training, defautl apple')
+    parser.add_argument('--tokenizer-name', type=str, default='MBart', help='Tokenizer Type')
     args = parser.parse_args()
     return args
 
@@ -33,7 +33,7 @@ def main():
     print(f"Using device {device}")
 
     print("Loading data")
-    tokenizer = make_tokenizer()
+    tokenizer = make_tokenizer(args.tokenizer_name)
     train_loader, val_loader = make_dataloaders(tokenizer, batch_size=args.batch_size)
 
     src_vocab_size = tokenizer.vocab_size
@@ -58,6 +58,7 @@ def main():
         val_loss = validate(model, val_loader, criterion, device, writer, epoch, tgt_vocab_size)
 
         # Save the model if validation loss decreases
+        # TODO: save every k epochs and save best model separately
         if val_loss < best_val_loss:
             best_val_loss = val_loss
             torch.save(model.state_dict(), f'checkpoints/{args.exp_name}_model_epoch_{epoch}.pt')

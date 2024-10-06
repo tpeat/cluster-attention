@@ -86,7 +86,7 @@ def main():
     ).to(device)
 
     print("Loading model weights...")
-    model_path = 'checkpoints/baseline_model_epoch_5.pt'
+    model_path = 'checkpoints/baseline_e30_model_epoch_10.pt'
     model = load_model(model, model_path, device)
 
     while True:
