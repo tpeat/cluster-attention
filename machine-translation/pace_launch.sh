@@ -3,7 +3,7 @@
 #SBATCH -N1 -n1
 #SBATCH --mem-per-gpu 30GB
 #SBATCH -G A100:1
-#SBATCH -t 01:00:00
+#SBATCH -t 08:00:00
 #SBATCH -oReport-%j.out
 
 module load python/3.10.10
@@ -13,7 +13,7 @@ module load mvapich2/2.3.7-1
 module load cuda/12.1.1
 
 # experiment name
-EXP_NAME='baseline_e30'
+EXP_NAME='baseline_e30_opus'
 
 echo "Launching Training for" $EXP_NAME
 
@@ -24,9 +24,9 @@ D_FF=1024
 MAX_SEQ_LENGTH=128
 EPOCHS=30
 LEARNING_RATE=5e-5
-BATCH_SIZE=16
+BATCH_SIZE=32
 DEVICE='cuda'
-TOKENIZER_TYPE='MBart'
+TOKENIZER_TYPE='opus'
 
  ~/.conda/envs/torch/bin/python main.py \
     --exp_name $EXP_NAME \

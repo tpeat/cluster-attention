@@ -1,14 +1,14 @@
 import math
 import torch.nn as nn
-from .attention import MultiHeadAttention
+from .attention import make_attn_fn
 from .ffn import FeedForwardNetwork
 from .pos_encoding import PositionalEncoding
 
 class DecoderLayer(nn.Module):
-    def __init__(self, d_model, num_heads, d_ff):
+    def __init__(self, d_model, num_heads, d_ff, self_attn_fn, x_attn_fn):
         super(DecoderLayer, self).__init__()
-        self.self_attn = MultiHeadAttention(d_model, num_heads)
-        self.cross_attn = MultiHeadAttention(d_model, num_heads)
+        self.self_attn = make_attn_fn(self_attn_fn, d_model, num_heads)
+        self.cross_attn = make_attn_fn(x_attn_fn, d_model, num_heads)
         self.ffn = FeedForwardNetwork(d_model, d_ff)
         
         self.norm1 = nn.LayerNorm(d_model)
@@ -33,13 +33,13 @@ class DecoderLayer(nn.Module):
         return x
     
 class Decoder(nn.Module):
-    def __init__(self, vocab_size, d_model, num_layers, num_heads, d_ff, max_seq_length):
+    def __init__(self, vocab_size, d_model, num_layers, num_heads, d_ff, max_seq_length, self_attn_fn, x_attn_fn):
         super(Decoder, self).__init__()
         self.embedding = nn.Embedding(vocab_size, d_model)
         self.pos_encoding = PositionalEncoding(d_model, max_seq_length)
         
         self.layers = nn.ModuleList([
-            DecoderLayer(d_model, num_heads, d_ff) for _ in range(num_layers)
+            DecoderLayer(d_model, num_heads, d_ff, self_attn_fn, x_attn_fn) for _ in range(num_layers)
         ])
         self.dropout = nn.Dropout(0.1)
         self.fc_out = nn.Linear(d_model, vocab_size)

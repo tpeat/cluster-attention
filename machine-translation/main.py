@@ -22,6 +22,7 @@ def parse_args():
     parser.add_argument('--batch_size', type=int, default=32, help='Batch size for training and validation')
     parser.add_argument('--device', type=str, default='cuda', help='Device to use for training, defautl apple')
     parser.add_argument('--tokenizer-name', type=str, default='MBart', help='Tokenizer Type')
+    parser.add_argument('--attn-type', type=str, default='baseline', help='Name of attention mechanism')
     args = parser.parse_args()
     return args
 
@@ -42,7 +43,7 @@ def main():
     print("Building model")
     model = Transformer(
         tokenizer, src_vocab_size, tgt_vocab_size, args.d_model, args.num_layers,
-        args.num_heads, args.d_ff, args.max_seq_length
+        args.num_heads, args.d_ff, args.max_seq_length, args.attn_type, args.attn_type
     ).to(device)
 
     criterion = nn.CrossEntropyLoss(ignore_index=tokenizer.pad_token_id)
