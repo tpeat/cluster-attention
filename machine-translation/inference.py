@@ -68,14 +68,20 @@ def load_model(model, model_path, device):
     return model
 
 
-def translate(source_sentence, model, tokenizer, device, start_symbol, end_symbol, max_len=50):
+def translate(source_sentence, model, tokenizer, device, end_symbol, max_len=50, beam_width=10):
     """
     New decoder using different greedy decoder method
     """
     # encode
     src_tokens = tokenizer.encode(source_sentence, return_tensors='pt').to(device)
     # ifnerence op
-    translated_tokens = model.greedy_decode(src_tokens, max_len, start_symbol, end_symbol) 
+    # translated_tokens = model.greedy_decode(src_tokens, max_len, end_symbol)
+    translated_tokens = model.beam_search_decode(
+        src=src_tokens,
+        max_len=max_len,
+        end_symbol=end_symbol,
+        beam_width=beam_width
+    )
     # decode   
     translated_sentence = tokenizer.decode(translated_tokens, skip_special_tokens=True)
     return translated_sentence
@@ -89,8 +95,10 @@ def main():
     tokenizer = make_tokenizer('opus')
     src_vocab_size, tgt_vocab_size = tokenizer.vocab_size, tokenizer.vocab_size
 
-    start_symbol = tokenizer.cls_token_id if hasattr(tokenizer, 'cls_token_id') else tokenizer.bos_token_id
-    end_symbol = tokenizer.sep_token_id if hasattr(tokenizer, 'sep_token_id') else tokenizer.eos_token_id
+    end_symbol = tokenizer.eos_token_id # alt: sep_token_id
+
+    # if not start_symbol:
+    #     start_symbol = tokenizer.convert_ids_to_tokens["fr_XX"]
     
     print("Building model")
     d_model=256
@@ -106,14 +114,14 @@ def main():
 
 
     print("Loading model weights...")
-    model_path = 'checkpoints/baseline_e30_v2_model_epoch_16.pt'
+    model_path = 'checkpoints/baseline_e30_opus_model_epoch_30.pt'
     model = load_model(model, model_path, device)
 
     while True:
         sentence = input("Enter a sentence for prediction (or 'exit' to quit): ")
         if sentence.lower() == 'exit':
             break
-        translation = translate(sentence, model, tokenizer, device, start_symbol, end_symbol)
+        translation = translate(sentence, model, tokenizer, device, end_symbol)
         # translation = generate_translation(model, sentence, tokenizer, device, max_seq_length)
         print(f"Prediction: {translation}\n")
 
