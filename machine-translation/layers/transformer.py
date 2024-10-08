@@ -43,7 +43,7 @@ class Transformer(nn.Module):
         output = self.decode(tgt, enc_output, src_mask, tgt_mask)
         return output
 
-    def greedy_decode(self, src, max_len, end_symbol):
+    def greedy_decode(self, src, max_len, start_symbol, end_symbol):
         """
         Greedy decoding method without using a start symbol.
         
@@ -61,8 +61,10 @@ class Transformer(nn.Module):
         with torch.no_grad():
             enc_output, src_mask = self.encode(src)
             
-            # Initialize target sequence with the <pad> token
-            tgt_tokens = torch.full((1, 1), self.tokenizer.pad_token_id, dtype=torch.long).to(device)  # Shape: [1, 1]
+            # could intiailize with pad_token_id or .lang_to_id['fr_XX'] or maybe cls_token_id
+            # mbart: tgt_tokens = torch.full((1, 1), self.tokenizer.lang_code_to_id['fr_XX'], dtype=torch.long).to(device)
+            # Bert tgt_tokens = torch.full((1, 1), self.tokenizer.cls_token_id, dtype=torch.long).to(device)
+            tgt_tensor = torch.tensor([tokens], dtype=torch.long).to(device) if tokens else torch.tensor([[start_symbol]], dtype=torch.long).to(device)  # Shape: [1, 1]
             
             for _ in range(max_len):
                 tgt_mask = self.make_tgt_mask(tgt_tokens)
@@ -94,6 +96,7 @@ class Transformer(nn.Module):
         self,
         src: torch.Tensor,
         max_len: int,
+        start_symbol: int,
         end_symbol: int,
         beam_width: int = 5,
         length_penalty: float = 1.0
@@ -129,13 +132,10 @@ class Transformer(nn.Module):
                     new_beams.append((score, tokens))
                     continue
 
-                # Prepare the target tensor
-                tgt_tensor = torch.tensor([tokens], dtype=torch.long).to(device) if tokens else torch.tensor([[self.tokenizer.eos_token_id]], dtype=torch.long).to(device)
-
-                # Generate target mask
+                # For the MBart tokenizer we want to start with specific fr_XX tokens so that we know its supposed to be french, self.tokenizer.cls_token_id
+                tgt_tensor = torch.tensor([tokens], dtype=torch.long).to(device) if tokens else torch.tensor([[start_symbol]], dtype=torch.long).to(device)  # Shape: [1, 1]
                 tgt_mask = self.make_tgt_mask(tgt_tensor)
 
-                # Decode
                 dec_output = self.decode(tgt_tensor, enc_output, src_mask, tgt_mask)
 
                 # Get log probabilities (for numerical stability)
@@ -153,7 +153,6 @@ class Transformer(nn.Module):
             # Select top beams
             # Optionally apply length penalty
             beams = sorted(new_beams, key=lambda x: x[0] / (len(x[1]) ** length_penalty), reverse=True)[:beam_width]
-
             # If all beams have ended, stop
             if all(tokens[-1] == end_symbol for _, tokens in beams):
                 break
@@ -166,7 +165,7 @@ class Transformer(nn.Module):
             best_tokens = best_tokens[:-1]
 
         # If the first token is <cls>, remove it
-        if best_tokens and best_tokens[0] == self.tokenizer.cls_token_id:
+        if best_tokens and best_tokens[0] == start_symbol:
             best_tokens = best_tokens[1:]
 
         return best_tokens

@@ -1,65 +1,7 @@
 import torch
-from data.tokenizer import make_tokenizer
+from data.tokenizer import make_tokenizer, get_start_end_pad_tokens
 from layers.attention import make_attn_fn
 from layers.transformer import Transformer
-
-def generate_translation(model, src_sentence, tokenizer, device, max_length=50):
-    """
-    Generates a translation for the given source sentence using the Transformer model.
-    
-    Args:
-        model (Transformer): The trained Transformer model.
-        src_sentence (str): The source sentence to translate.
-        tokenizer (Tokenizer): The tokenizer used for encoding and decoding.
-        device (str): The device to perform computations on.
-        max_length (int): Maximum length of the generated translation.
-        
-    Returns:
-        str: The translated sentence.
-    """
-    model.eval()
-    
-    # Tokenize the source sentence
-    src_tokens = tokenizer.encode(src_sentence)
-    src_tensor = torch.tensor(src_tokens).unsqueeze(0).to(device)  # Shape: [1, src_len]
-    
-    # Generate source mask
-    src_mask = model.make_src_mask(src_tensor)
-    
-    # Encode the source sentence
-    with torch.no_grad():
-        enc_output = model.encoder(src_tensor, src_mask)
-    
-    # Initialize the target sequence with the <sos> token
-    tgt_tokens = [tokenizer.cls_token_id]
-    tgt_tensor = torch.tensor(tgt_tokens).unsqueeze(0).to(device)  # Shape: [1, 1]
-    
-    for _ in range(max_length):
-        # Generate target mask
-        tgt_mask = model.make_tgt_mask(tgt_tensor)
-        
-        # Decode the current target sequence
-        with torch.no_grad():
-            dec_output = model.decoder(tgt_tensor, enc_output, src_mask, tgt_mask)
-        
-        # Get the logits for the last token
-        last_token_logits = dec_output[:, -1, :]  # Shape: [1, tgt_vocab_size]
-        
-        # Predict the next token (greedy decoding)
-        next_token_id = last_token_logits.argmax(dim=-1).item()
-        
-        # Append the predicted token to the target sequence
-        tgt_tokens.append(next_token_id)
-        tgt_tensor = torch.tensor(tgt_tokens).unsqueeze(0).to(device)
-        
-        # If the <eos> token is generated, stop
-        if next_token_id == tokenizer.sep_token_id:
-            break
-    
-    translation_tokens = tgt_tokens[1:-1]  # Remove [CLS] and [SEP]
-    translation = tokenizer.decode(translation_tokens, skip_special_tokens=True)
-    return translation
-
 
 def load_model(model, model_path, device):
     # load model checkpoint
@@ -68,7 +10,7 @@ def load_model(model, model_path, device):
     return model
 
 
-def translate(source_sentence, model, tokenizer, device, end_symbol, max_len=50, beam_width=10):
+def translate(source_sentence, model, tokenizer, device, start_symbol, end_symbol, max_len=50, beam_width=5):
     """
     New decoder using different greedy decoder method
     """
@@ -79,26 +21,25 @@ def translate(source_sentence, model, tokenizer, device, end_symbol, max_len=50,
     translated_tokens = model.beam_search_decode(
         src=src_tokens,
         max_len=max_len,
+        start_symbol=start_symbol,
         end_symbol=end_symbol,
         beam_width=beam_width
     )
     # decode   
     translated_sentence = tokenizer.decode(translated_tokens, skip_special_tokens=True)
     return translated_sentence
-    
+
 
 def main():
     device = 'cuda' if torch.cuda.is_available() else 'mps'
     print("Device:", device)
     
     print("Creating Tokenizer")
-    tokenizer = make_tokenizer('opus')
+    tokenizer_name = 'MBart'
+    tokenizer = make_tokenizer(tokenizer_name)
+    start_symbol, end_symbol, padd_token_id = get_start_end_pad_tokens(tokenizer_name, tokenizer)
+
     src_vocab_size, tgt_vocab_size = tokenizer.vocab_size, tokenizer.vocab_size
-
-    end_symbol = tokenizer.eos_token_id # alt: sep_token_id
-
-    # if not start_symbol:
-    #     start_symbol = tokenizer.convert_ids_to_tokens["fr_XX"]
     
     print("Building model")
     d_model=256
@@ -114,14 +55,16 @@ def main():
 
 
     print("Loading model weights...")
-    model_path = 'checkpoints/baseline_e30_opus_model_epoch_30.pt'
+    model_path = 'checkpoints/baseline_e30_mbart_model_epoch_20.pt'
     model = load_model(model, model_path, device)
+    params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print("Num params:", params)
 
     while True:
         sentence = input("Enter a sentence for prediction (or 'exit' to quit): ")
         if sentence.lower() == 'exit':
             break
-        translation = translate(sentence, model, tokenizer, device, end_symbol)
+        translation = translate(sentence, model, tokenizer, device, start_symbol, end_symbol)
         # translation = generate_translation(model, sentence, tokenizer, device, max_seq_length)
         print(f"Prediction: {translation}\n")
 
