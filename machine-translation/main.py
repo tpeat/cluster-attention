@@ -6,6 +6,7 @@ from torch.utils.tensorboard import SummaryWriter
 from data.load_data import make_dataloaders
 from data.tokenizer import make_tokenizer
 from layers.transformer import Transformer
+from layers.lstm import Encoder, Decoder, Seq2Seq
 from engine.train import train, validate
 
 def parse_args():
@@ -21,7 +22,8 @@ def parse_args():
     parser.add_argument('--learning_rate', type=float, default=1e-4, help='Learning rate')
     parser.add_argument('--batch_size', type=int, default=32, help='Batch size for training and validation')
     parser.add_argument('--device', type=str, default='cuda', help='Device to use for training, defautl apple')
-    parser.add_argument('--tokenizer-name', type=str, default='MBart', help='Tokenizer Type')
+    parser.add_argument('--tokenizer_name', type=str, default='opus', help='Tokenizer Type')
+    parser.add_argument('--model_type', type=str, default='Transformer', help='Model Type')
     args = parser.parse_args()
     return args
 
@@ -29,7 +31,7 @@ def main():
     args = parse_args()
 
     # check if specified device is available, defautls to mps if not
-    device = args.device if torch.cuda.is_available() and args.device=='cuda' else 'mps'
+    device = args.device if torch.cuda.is_available() and args.device=='cuda' else 'cpu'
     print(f"Using device {device}")
 
     print("Loading data")
@@ -39,11 +41,17 @@ def main():
     src_vocab_size = tokenizer.vocab_size
     tgt_vocab_size = tokenizer.vocab_size
 
-    print("Building model")
-    model = Transformer(
-        tokenizer, src_vocab_size, tgt_vocab_size, args.d_model, args.num_layers,
-        args.num_heads, args.d_ff, args.max_seq_length
-    ).to(device)
+    if (args.model_type == "lstm"):
+        print("Building LSTM Model")
+        encoder = Encoder(src_vocab_size, 512).to(device)
+        decoder = Decoder(tgt_vocab_size, 512).to(device)
+        model = Seq2Seq(encoder, decoder).to(device)
+    else:
+        print("Building Transformer model")
+        model = Transformer(
+            tokenizer, src_vocab_size, tgt_vocab_size, args.d_model, args.num_layers,
+            args.num_heads, args.d_ff, args.max_seq_length
+        ).to(device)
 
     criterion = nn.CrossEntropyLoss(ignore_index=tokenizer.pad_token_id)
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)

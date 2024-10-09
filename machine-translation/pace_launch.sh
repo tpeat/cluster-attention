@@ -13,7 +13,7 @@ module load mvapich2/2.3.7-1
 module load cuda/12.1.1
 
 # experiment name
-EXP_NAME='baseline_e30'
+EXP_NAME='baseline_e3'
 
 echo "Launching Training for" $EXP_NAME
 
@@ -22,11 +22,11 @@ NUM_LAYERS=4
 NUM_HEADS=4
 D_FF=1024
 MAX_SEQ_LENGTH=128
-EPOCHS=30
+EPOCHS=3
 LEARNING_RATE=5e-5
 BATCH_SIZE=16
 DEVICE='cuda'
-TOKENIZER_TYPE='MBart'
+TOKENIZER_TYPE='opus'
 
  ~/.conda/envs/torch/bin/python main.py \
     --exp_name $EXP_NAME \
@@ -39,4 +39,5 @@ TOKENIZER_TYPE='MBart'
     --learning_rate $LEARNING_RATE \
     --batch_size $BATCH_SIZE \
     --device $DEVICE \
-    --tokenizer-name $TOKENIZER_TYPE
+    --tokenizer-name $TOKENIZER_TYPE \
+    --model-type $MODEL_TYPE
