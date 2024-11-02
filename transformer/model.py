@@ -1,3 +1,16 @@
+''' 
+Token-Merging Implementation for Experiment 1
+
+Changes:
+    1. Token merging occurs between MultiHeadedAttetion and FeedForward layers in each encoder block
+    2. Token keys are merged based on cosine-similarity
+    3. Attention function is changed to be a proportional attention function
+
+References:
+    1. Paper: https://arxiv.org/abs/2210.09461
+    2. GitHub: https://github.com/facebookresearch/ToMe/tree/main
+'''
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -175,6 +188,40 @@ class MultiHeadedAttention(nn.Module):
         self.projection_layer.bias.data.copy_(biases[3])
         # YOUR CODE ENDS HERE
 
+class TokenMerging():
+
+    def __init__(self, r):
+        """
+        Intializes the TokenMerging layer with specifed number of tokens to merge. 
+        Args:
+            r (int): The number of tokens to merge at each iteration
+        """
+        self.r = r
+    
+    def forward(self, x):
+        """
+        Defines the computation performed at each call of the token merger
+        Parameters:
+            x (torch.Tensor): The input tensor with size [batch_size, seq_len, d_model]
+        
+        Returns:
+            torch.Tensor: The output tensor with the same shape as the input tensor, after
+                          token merging has occurred. 
+        """
+        out = None
+        
+        # First, ensure that r is not more than 50% of the total number of tokens in x
+        r = min(self.r, x.shape[1] // 2)
+
+        # Return x if number of tokens to merge is <= 0
+        if r <= 0:
+            return x
+        
+        with torch.no_grad():
+            # Separate tokens in x into two groups: A and B
+            
+
+        return out
 
 class FeedForward(nn.Module):
         
@@ -322,7 +369,7 @@ class ResidualStreamBlock(nn.Module):
 
 class EncoderBlock(nn.Module):
 
-    def __init__(self, size, self_attn, feed_forward, dropout):
+    def __init__(self, size, self_attn, feed_forward, dropout, token_merger):
         """
         Initializes the EncoderLayer with self-attention and feed-forward network along with
         necessary configurations for residual stream blocks.
@@ -341,6 +388,7 @@ class EncoderBlock(nn.Module):
         self.feed_forward = feed_forward
         self.residual_stream_block1 = ResidualStreamBlock(size, dropout)
         self.residual_stream_block2 = ResidualStreamBlock(size, dropout)
+        self.token_merger = token_merger
         
         # YOUR CODE ENDS HERE
 
@@ -361,6 +409,7 @@ class EncoderBlock(nn.Module):
         # TODO: Implement the encoder block forward pass
         # YOUR CODE STARTS HERE
         x = self.residual_stream_block1(x, lambda x: self.self_attn(x, x, x,mask=mask))
+        x_merged = self.token_merger(x)
         out = self.residual_stream_block2(x, lambda x: self.feed_forward(x))
         # YOUR CODE ENDS HERE
         return out
@@ -659,7 +708,7 @@ class Transformer(nn.Module):
         return out
 
 
-def make_model(src_vocab, tgt_vocab, n_blocks=6, d_model=512, d_ff=2048, h=8, dropout=0.1):
+def make_model(src_vocab, tgt_vocab, n_blocks=6, d_model=512, d_ff=2048, h=8, dropout=0.1, r=5):
     """
     Constructs a Transformer model using specified hyperparameters and initializes it.
     Parameters:
@@ -682,8 +731,9 @@ def make_model(src_vocab, tgt_vocab, n_blocks=6, d_model=512, d_ff=2048, h=8, dr
     attn = MultiHeadedAttention(h, d_model)
     ff = FeedForward(d_model, d_ff, dropout)
     position = PositionalEncoding(d_model, dropout)
+    token_merger = TokenMerging(r)
     model = Transformer(
-        Encoder(EncoderBlock(d_model, c(attn), c(ff), dropout), n_blocks),
+        Encoder(EncoderBlock(d_model, c(attn), c(ff), dropout, token_merger), n_blocks),
         Decoder(DecoderBlock(d_model, c(attn), c(attn), c(ff), dropout), n_blocks),
         nn.Sequential(Embeddings(d_model, src_vocab), c(position)),
         nn.Sequential(Embeddings(d_model, tgt_vocab), c(position)),

@@ -76,6 +76,7 @@ class ModelHyperParams:
     d_ff: int = 2048 # dimension of feedforward layer
     num_heads: int = 8 # number of attention heads
     dropout: float = 0.1 # dropout rate
+    r: int = 5 # number of tokens to merge
 
 
 def init_training(training_hp: TrainingHyperParams,
@@ -105,7 +106,8 @@ def init_training(training_hp: TrainingHyperParams,
         d_model=model_hp.d_model,
         d_ff=model_hp.d_ff,
         h=model_hp.num_heads,
-        dropout=model_hp.dropout
+        dropout=model_hp.dropout,
+        r=model_hp.r
     )
     # make model
     if training_hp.continue_training:  # load model from checkpoint
@@ -305,7 +307,8 @@ def load_trained_model(training_hp=None, model_hp=None, model_path=None):
         d_model=model_hp.d_model,
         d_ff=model_hp.d_ff,
         h=model_hp.num_heads,
-        dropout=model_hp.dropout
+        dropout=model_hp.dropout,
+        r=model_hp.r
     )
 
     # load model weights 
