@@ -76,7 +76,7 @@ class ModelHyperParams:
     d_ff: int = 2048 # dimension of feedforward layer
     num_heads: int = 8 # number of attention heads
     dropout: float = 0.1 # dropout rate
-    r: int = 5 # number of tokens to merge
+    r: int = 1 # number of tokens to merge
 
 
 def init_training(training_hp: TrainingHyperParams,

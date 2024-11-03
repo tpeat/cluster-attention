@@ -219,7 +219,25 @@ class TokenMerging():
         
         with torch.no_grad():
             # Separate tokens in x into two groups: A and B
-            
+            a = x[:, ::2, :]
+            b = x[:, 1::2, :]
+
+            scores = a @ b.transpose(-1, -2)
+
+            node_max, node_idx = scores.max(dim=-1)
+            edge_idx = node_max.argsort(dim=-1, descending=True)[..., None]
+
+            unm_idx = edge_idx[..., r:, :]  # Unmerged Tokens
+            src_idx = edge_idx[..., :r, :]  # Merged Tokens
+            dst_idx = node_idx[..., None].gather(dim=-2, index=src_idx)
+
+            # merge 
+            n, t1, c = a.shape
+            unm = a.gather(dim=-2, index=unm_idx.expand(n, t1 - r, c))
+            a = a.gather(dim=-2, index=src_idx.expand(n, r, c))
+            b = b.scatter_reduce(-2, dst_idx.expand(n, r, c), a, reduce="mean")
+
+            out = torch.cat([unm, b], dim=1)
 
         return out
 
@@ -409,7 +427,7 @@ class EncoderBlock(nn.Module):
         # TODO: Implement the encoder block forward pass
         # YOUR CODE STARTS HERE
         x = self.residual_stream_block1(x, lambda x: self.self_attn(x, x, x,mask=mask))
-        x_merged = self.token_merger(x)
+        out = self.token_merger.forward(x)
         out = self.residual_stream_block2(x, lambda x: self.feed_forward(x))
         # YOUR CODE ENDS HERE
         return out
