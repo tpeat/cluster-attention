@@ -18,6 +18,15 @@ class Tokenizer:
     def get_pad_token_id(self):
         return self.tokenizer.pad_token_id
     
+    def get_sos_token_id(self):
+        if self.tokenizer.bos_token_id is not None:
+            return self.tokenizer.bos_token_id
+        else:
+            return self.get_pad_token_id()
+    
+    def get_eos_token_id(self):
+        return self.tokenizer.eos_token_id
+    
     def get_vocab_size(self):
         return self.tokenizer.vocab_size
 
