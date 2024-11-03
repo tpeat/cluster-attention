@@ -1,15 +1,15 @@
-from transformers import BertTokenizer, MBartForConditionalGeneration, MBartTokenizer, AutoTokenizer
+from transformers import BertTokenizer, MBart50Tokenizer, AutoTokenizer
 
 
 class Tokenizer:
-    def __init__(self, name="opus"):
+    def __init__(self, name="MBart"):
         self.tokenizer = self._make_tokenizer(name)
 
     def _make_tokenizer(self, name):
         if name == "Bert":
             return BertTokenizer.from_pretrained("google-bert/bert-base-multilingual-cased")
         elif name == "MBart":
-            return MBartTokenizer.from_pretrained("facebook/mbart-large-50-many-to-many-mmt", src_lang="en_XX", tgt_lang="fr_XX")
+            return MBart50Tokenizer.from_pretrained("facebook/mbart-large-50-many-to-many-mmt", src_lang="en_XX", tgt_lang="fr_XX")
         elif name == "opus":
             return AutoTokenizer.from_pretrained("Helsinki-NLP/opus-mt-en-fr")
         else:
