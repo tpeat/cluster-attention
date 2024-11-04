@@ -26,6 +26,7 @@ def parse_args():
     parser.add_argument('--batch_size', type=int, default=64, help='Batch size per GPU.')
     parser.add_argument('--backend', type=str, default='nccl', help='Distributed backend (default: nccl).')
     parser.add_argument('--port', type=str, default='12355', help='Port number for distributed training.')
+    parser.add_argument('--early_termination', type=int, default=None, help='max iteration before termianting')
     return parser.parse_args()
 
 def setup_distributed(rank, world_size, backend, port):
@@ -35,6 +36,15 @@ def setup_distributed(rank, world_size, backend, port):
 
 def cleanup_distributed():
     dist.destroy_process_group()
+
+
+def convert_and_join(int_to_str_dict, list_of_lists):
+    converted_list_of_lists = [[int_to_str_dict[num] for num in sublist] for sublist in list_of_lists]
+    out = [' '.join(sublist) for sublist in converted_list_of_lists]
+    # Remove special tokens
+    out = [s.replace(BOS_WORD, '').replace(EOS_WORD, '').replace(BLANK_WORD, '').strip() for s in out]
+    return out
+
 
 def bleu_score(reference_sentences, candidate_sentences):
     """
@@ -68,6 +78,8 @@ def main():
     torch.cuda.set_device(local_rank)
     device = torch.device(f'cuda:{local_rank}')
 
+    early_termination = int(args.early_termination)
+
     # Only the master process will perform certain actions like saving files and printing
     is_master = rank == 0
 
@@ -82,7 +94,7 @@ def main():
     training_hp = TrainingHyperParams()
 
     # pass return dataset flag to get back datasets, pass cpu to not move anything to gpu yet
-    train_dataset, valid_dataset = make_dataloaders(tokenizer=TOKENIZER, device='cpu', return_datasets=True)
+    train_dataset, valid_dataset = make_dataloaders(tokenizer=TOKENIZER, device='cpu', return_datasets=True, src_lang='fr', tgt_lang='en')
 
     valid_sampler = DistributedSampler(valid_dataset, num_replicas=world_size, rank=rank, shuffle=False)
 
@@ -115,7 +127,11 @@ def main():
     transformer.eval()
 
     with torch.no_grad():
-        for batch in tqdm(valid_dataloader, desc=f'Rank {rank}: Decoding translations', disable=not is_master):
+        for i, batch in enumerate(tqdm(valid_dataloader, desc=f'Rank {rank}: Decoding translations', disable=not is_master)):
+            if i == 0:
+                print("Source Text:", TOKENIZER.tokenizer.decode(batch['src'][0], skip_special_tokens=True))
+                print("Target Text:", TOKENIZER.tokenizer.decode(batch['tgt'][0], skip_special_tokens=True))
+                
             src = batch['src'].to(device, non_blocking=True)
             src_mask = batch['src_mask'].to(device, non_blocking=True)
             tgt = batch['tgt']  # Keep on CPU
@@ -136,11 +152,22 @@ def main():
                     p=args.p,
                 )
             # can also use the .join candiadates method
-            candidate = [TOKENIZER.tokenizer.decode(id_list, skip_special_tokens=True) for id_list in pred]
-            reference = [TOKENIZER.tokenizer.decode(id_list, skip_special_tokens=True) for id_list in tgt]
+            with TOKENIZER.tokenizer.as_target_tokenizer():
+                candidate = [TOKENIZER.tokenizer.decode(id_list, skip_special_tokens=True) for id_list in pred]
+                reference = [TOKENIZER.tokenizer.decode(id_list, skip_special_tokens=True) for id_list in tgt]
+                print(f"Number of candidates: {len(candidate)}")
+                print(f"Number of references: {len(reference)}")
+
+                for cand, ref in zip(candidate[:5], reference[:5]):
+                    print(f"Candidate: {cand}")
+                    print(f"Reference: {ref}")
+                    print("-" * 50)
 
             all_predictions.extend(candidate)
             all_references.extend(reference)
+
+            if early_termination is not None and i >= early_termination:
+                break
 
     # Gather all predictions and references from all processes to the master process
     gathered_predictions = [None for _ in range(world_size)]

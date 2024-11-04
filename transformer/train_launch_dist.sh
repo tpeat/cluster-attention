@@ -13,7 +13,7 @@ module load mvapich2/2.3.7-1
 module load cuda/12.1.1
 
 # experiment name
-EXP_NAME='baseline_e30_mbart'
+EXP_NAME='baseline_e30_mbart_dist'
 
 echo "Launching distributed eval for" $EXP_NAME
 
@@ -28,20 +28,9 @@ fi
 
 echo "Number of GPUs allocated: $NUM_GPUS"
 
-SCRIPT_PATH="distributed_bleu.py"
+SCRIPT_PATH="distributed_training.py"
 
-MODEL_PATH="model_weights/model_epoch_6.pt"
-
-OUTPUT_FILE="bleu_results_top_k.csv"
-
-DECODING_STRATEGY="TOP_K"
-BATCH_SIZE=64 # NOTE: BEAM_SEARCH means batch size has to be 1
-# BEAM_WIDTH=5
-# P=0.9
-K=5
-EARLY_TERM=64
-
-echo "Starting distributed BLEU score calculation..."
+echo "Starting distributed training"
 
 ~/.conda/envs/nlp/bin/python -m torch.distributed.run \
     --nproc_per_node=$NUM_GPUS \
@@ -50,9 +39,4 @@ echo "Starting distributed BLEU score calculation..."
     --rdzv_backend=c10d \
     --rdzv_endpoint=localhost:$MASTER_PORT \
     $SCRIPT_PATH \
-    --model_path $MODEL_PATH \
-    --output_file $OUTPUT_FILE \
-    --decoding_strategy $DECODING_STRATEGY \
-    --batch_size $BATCH_SIZE \
-    --k $K \
-    --early_termination $EARLY_TERM
+    --exp_name $EXP_NAME
