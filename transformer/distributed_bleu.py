@@ -94,7 +94,8 @@ def main():
     training_hp = TrainingHyperParams()
 
     # pass return dataset flag to get back datasets, pass cpu to not move anything to gpu yet
-    train_dataset, valid_dataset = make_dataloaders(tokenizer=TOKENIZER, device='cpu', return_datasets=True, src_lang='fr', tgt_lang='en')
+    # defaults to fr -> en
+    train_dataset, valid_dataset = make_dataloaders(tokenizer=TOKENIZER, device='cpu', return_datasets=True)
 
     valid_sampler = DistributedSampler(valid_dataset, num_replicas=world_size, rank=rank, shuffle=False)
 

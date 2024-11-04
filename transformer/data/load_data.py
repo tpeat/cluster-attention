@@ -3,7 +3,7 @@ from torch.utils.data import DataLoader
 
 from .dataset import TranslationDataset
 
-def make_dataloaders(tokenizer, device, batch_size=16, test_size=0.2, return_datasets=False, src_lang="en", tgt_lang="fr"):
+def make_dataloaders(tokenizer, device, batch_size=16, test_size=0.2, return_datasets=False, src_lang="fr", tgt_lang="en"):
     books = load_dataset("opus_books", "en-fr")
     books = books["train"].train_test_split(test_size=test_size)
 

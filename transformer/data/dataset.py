@@ -32,7 +32,7 @@ def make_tgt_mask(tgt, pad):
         return tgt_mask
 
 class TranslationDataset(Dataset):
-    def __init__(self, dataset, tokenizer, device, max_length=128, src_lang='en', tgt_lang='fr'):
+    def __init__(self, dataset, tokenizer, device, max_length=128, src_lang='fr', tgt_lang='en'):
         self.dataset = dataset
         self.tokenizer = tokenizer
         self.max_length = max_length

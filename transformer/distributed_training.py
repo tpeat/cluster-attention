@@ -99,6 +99,7 @@ def init_training(training_hp: TrainingHyperParams,
                   local_rank: int):
     """Distributed training initalization"""
     # get datasets
+    # defaults to fr->en
     train_dataset, valid_dataset = make_dataloaders(tokenizer=TOKENIZER, device='cpu', return_datasets=True)
 
     # Create distributed samplers
