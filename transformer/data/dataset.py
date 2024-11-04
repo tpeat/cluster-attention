@@ -32,21 +32,27 @@ def make_tgt_mask(tgt, pad):
         return tgt_mask
 
 class TranslationDataset(Dataset):
-    def __init__(self, dataset, tokenizer, device, max_length=128):
+    def __init__(self, dataset, tokenizer, device, max_length=128, src_lang='en', tgt_lang='fr'):
         self.dataset = dataset
         self.tokenizer = tokenizer
         self.max_length = max_length
         self.device = device
+        self.src_lang= src_lang
+        self.tgt_lang = tgt_lang
     
     def __len__(self):
         return len(self.dataset)
     
     def __getitem__(self, idx):
-        source_text = self.dataset[idx]["translation"]["en"]
-        target_text = self.dataset[idx]["translation"]["fr"]
+        source_text = self.dataset[idx]["translation"][self.src_lang]
+        target_text = self.dataset[idx]["translation"][self.tgt_lang]
         pad = self.tokenizer.get_pad_token_id()
-        source_encodings = self.tokenizer.tokenizer(source_text, truncation=True, padding="max_length", max_length=self.max_length, return_tensors="pt")
-        target_encodings = self.tokenizer.tokenizer(target_text, truncation=True, padding="max_length", max_length=self.max_length, return_tensors="pt")
+        if self.src_lang != "en":
+            source_encodings = self.tokenizer.tokenizer(text_target=source_text, truncation=True, padding="max_length", max_length=self.max_length, return_tensors="pt")
+            target_encodings = self.tokenizer.tokenizer(target_text, truncation=True, padding="max_length", max_length=self.max_length, return_tensors="pt")
+        else:
+            source_encodings = self.tokenizer.tokenizer(source_text, truncation=True, padding="max_length", max_length=self.max_length, return_tensors="pt")
+            target_encodings = self.tokenizer.tokenizer(text_target=target_text, truncation=True, padding="max_length", max_length=self.max_length, return_tensors="pt")
         tgt_mask = make_tgt_mask(target_encodings['input_ids'].to(self.device), pad=pad)
         return {
             'src': source_encodings['input_ids'].squeeze(0).to(self.device),

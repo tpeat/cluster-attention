@@ -32,13 +32,14 @@ SCRIPT_PATH="distributed_bleu.py"
 
 MODEL_PATH="model_weights/model_epoch_6.pt"
 
-OUTPUT_FILE="bleu_results.csv"
+OUTPUT_FILE="bleu_results_top_k.csv"
 
-DECODING_STRATEGY="TOP_P"
+DECODING_STRATEGY="TOP_K"
 BATCH_SIZE=64 # NOTE: BEAM_SEARCH means batch size has to be 1
 # BEAM_WIDTH=5
-P=0.9
-
+# P=0.9
+K=5
+EARLY_TERM=64
 
 echo "Starting distributed BLEU score calculation..."
 
@@ -53,5 +54,5 @@ echo "Starting distributed BLEU score calculation..."
     --output_file $OUTPUT_FILE \
     --decoding_strategy $DECODING_STRATEGY \
     --batch_size $BATCH_SIZE \
-    --p $P
-    # --beam_width $BEAM_WIDTH
+    --k $K \
+    --early_termination $EARLY_TERM
