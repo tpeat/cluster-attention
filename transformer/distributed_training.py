@@ -24,6 +24,7 @@ MODEL_DIR = "model_weights"
 TOKENIZER = Tokenizer()
 PAD_ID = TOKENIZER.get_pad_token_id()
 VOCAB_SIZE = TOKENIZER.get_vocab_size()
+print(f"Tokenizer {TOKENIZER.name} vocab size {VOCAB_SIZE}")
 
 
 @dataclass
@@ -352,7 +353,7 @@ def load_trained_model(training_hp=None, model_hp=None, model_path=None, exp_nam
     if training_hp is None: training_hp = TrainingHyperParams()
     if model_hp is None: model_hp = ModelHyperParams()
 
-    # get device 
+    # get device TODO: does this clobber dist?
     device = torch.device('cuda' if torch.cuda.is_available()
                           else ('mps' if torch.backends.mps.is_available() else 'cpu'))
 
@@ -403,7 +404,8 @@ def main():
     model_hp = ModelHyperParams()
     training_hp.exp_name = args.exp_name
 
-    model = load_trained_model(training_hp, model_hp)
+    model_path = args.model_path
+    model = load_trained_model(training_hp, model_hp, model_path)
 
 
 if __name__ == "__main__":

@@ -11,7 +11,7 @@ import pandas as pd
 
 from data.load_data import make_dataloaders
 from data.tokenizer import Tokenizer
-from model_training import TrainingHyperParams, load_trained_model
+from distributed_training import TrainingHyperParams, load_trained_model
 from sequence_generator import SequenceGenerator, DecodingStrategy
 
 def parse_args():

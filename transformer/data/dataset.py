@@ -47,18 +47,15 @@ class TranslationDataset(Dataset):
         source_text = self.dataset[idx]["translation"][self.src_lang]
         target_text = self.dataset[idx]["translation"][self.tgt_lang]
         pad = self.tokenizer.get_pad_token_id()
-        if self.src_lang != "en":
-            source_encodings = self.tokenizer.tokenizer(text_target=source_text, truncation=True, padding="max_length", max_length=self.max_length, return_tensors="pt")
-            target_encodings = self.tokenizer.tokenizer(target_text, truncation=True, padding="max_length", max_length=self.max_length, return_tensors="pt")
-        else:
-            source_encodings = self.tokenizer.tokenizer(source_text, truncation=True, padding="max_length", max_length=self.max_length, return_tensors="pt")
-            target_encodings = self.tokenizer.tokenizer(text_target=target_text, truncation=True, padding="max_length", max_length=self.max_length, return_tensors="pt")
+        # consistent decoding bc we now pass src_lang and tgt_lang to tokenizer
+        source_encodings = self.tokenizer.tokenizer(source_text, truncation=True, padding="max_length", max_length=self.max_length, return_tensors="pt")
+        target_encodings = self.tokenizer.tokenizer(text_target=target_text, truncation=True, padding="max_length", max_length=self.max_length, return_tensors="pt")
+
         tgt_mask = make_tgt_mask(target_encodings['input_ids'].to(self.device), pad=pad)
         return {
             'src': source_encodings['input_ids'].squeeze(0).to(self.device),
             'src_mask': source_encodings['attention_mask'].to(self.device),
             'tgt': target_encodings['input_ids'].squeeze(0).to(self.device),
             'tgt_mask': tgt_mask.squeeze(0).to(self.device),
-            'ntokens': (target_encodings['input_ids'].squeeze(0).to(self.device) != pad).data.sum()
-            
+            'ntokens': (target_encodings['input_ids'].squeeze(0).to(self.device) != pad).data.sum()    
         }
