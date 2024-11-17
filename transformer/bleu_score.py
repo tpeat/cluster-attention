@@ -11,8 +11,9 @@ from sequence_generator import SequenceGenerator, DecodingStrategy
 
 
 def get_bleu_score(model_path, device, decoding_strategy=DecodingStrategy.GREEDY, max_len=1, k=None, p=None,
-                   beam_width=None, batch_size=64, validation=True):
+                   beam_width=None, batch_size=64, validation=False):
     TOKENIZER = Tokenizer()
+    print(TOKENIZER.name)
     PAD_ID = TOKENIZER.get_pad_token_id()
     EOS_ID = TOKENIZER.get_eos_token_id()
     SOS_ID = TOKENIZER.get_sos_token_id()
@@ -31,8 +32,7 @@ def get_bleu_score(model_path, device, decoding_strategy=DecodingStrategy.GREEDY
     )
     all_predictions = []
     all_references = []
-    for i, data in tqdm(enumerate(valid_dataloader), desc='Decoding translations', total=len(valid_dataloader)):
-
+    for i, data in tqdm(enumerate(train_dataloader), desc='Decoding translations', total=len(valid_dataloader)):
         pred = sg.generate(
                 src=data['src'],
                 src_mask=data['src_mask'],
@@ -40,8 +40,12 @@ def get_bleu_score(model_path, device, decoding_strategy=DecodingStrategy.GREEDY
                 k=k,
                 p=p
         )
+
         candidate = [TOKENIZER.tokenizer.decode(id_list, skip_special_tokens=True) for id_list in pred]
         reference = [TOKENIZER.tokenizer.decode(id_list, skip_special_tokens=True) for id_list in data['tgt']]
+        #print([TOKENIZER.tokenizer.decode(token) for token in data['src']])
+        print("candidate: ", candidate)
+        print("reference: ", reference)
         all_predictions.extend(candidate)
         if validation:
             all_references.extend(reference)

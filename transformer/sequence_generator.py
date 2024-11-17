@@ -51,26 +51,14 @@ class SequenceGenerator:
         """
         with torch.no_grad():
             batch_size = src.size(0)
-            out_tokens = torch.full((batch_size, 1), self.sos_token, dtype=torch.long).to(src.device)
+            out_tokens = torch.full((batch_size, 1), 250008, dtype=torch.long).to(src.device)
 
             memory = self.model.encode(src, src_mask)
             tgt_mask = autoregressive_mask(out_tokens.size(1)).to(src.device)
-            # encoded_src = self.model.encode(src, src_mask)
-            # ag_mask = autoregressive_mask(self.max_len).type_as(src.data)
             for i in range(self.max_len -1):  # -1 to account for the SOS token
                 prob = None
-                # tgt_mask = ag_mask[:,:i+1, :i+1]
-                # decoder_input = out_tokens[:, :i+1]
-                # out = self.model.decode(encoded_src, src_mask, decoder_input, tgt_mask)
-                # log_probs = self.model.generator.forward(out)
-                # prob = torch.exp(log_probs)
-                # prob = prob[:, -1, :]  # Shape: [batch_size, vocab_size]
                 log_prob = self.get_log_prob_from_model(memory, src_mask, out_tokens, tgt_mask)
-            # log_prob = self.model(src, src_mask, out_tokens, tgt_mask)
                 prob = torch.exp(log_prob[:, -1, :])
-                # YOUR CODE ENDS HERE
-                # These are the different decoding strategies to generate the next token
-                # Will be implemented in the following methods
                 if strategy == DecodingStrategy.GREEDY:
                     next_word, next_word_log_prob = self.sample_greedy(prob)
                 elif strategy == DecodingStrategy.RANDOM:
@@ -92,7 +80,7 @@ class SequenceGenerator:
                 # YOUR CODE ENDS HERE
 
             # Remove sequences after the end symbol for each batch item
-            '''decoded_sequences = []
+            decoded_sequences = []
             # TODO: Implement the functionality to remove tokens after the EOS token
             # YOUR CODE STARTS HERE
             # for each sequence in the batch, remove the padding tokens and append the sequence to the decoded_sequences
@@ -103,12 +91,11 @@ class SequenceGenerator:
                     if token == self.eos_token:
                         new_seq.append(token.item())
                         break
-                    elif token == self.pad_token:
+                    elif token == self.pad_token or token==self.sos_token:
                         continue
                     else:
                         new_seq.append(token.item())
-                decoded_sequences.append(new_seq)
-            '''     
+                decoded_sequences.append(new_seq)    
                 
             # YOUR CODE ENDS HERE
             return out_tokens

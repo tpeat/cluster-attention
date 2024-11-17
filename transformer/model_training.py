@@ -15,11 +15,12 @@ from data.tokenizer import Tokenizer
 MODEL_DIR = "model_weights"
 
 # special tokens 
-TOKENIZER = Tokenizer()
-PAD_ID = TOKENIZER.get_pad_token_id()
-VOCAB_SIZE = TOKENIZER.get_vocab_size()
 
+PAD_ID_EN = None
+PAD_ID_FR = None
 
+src_vocab_size = None
+tgt_vocab_size = None
 @dataclass
 class TrainingHyperParams:
     """ 
@@ -57,7 +58,7 @@ class TrainingHyperParams:
     # model_epoch_4.pt is the model weights file which you want to resume training from
     # if None, initialize new model in `init_training` and `train` and start training from scratch
     continue_training: str = None 
-    # continue_training: str = os.path.join(os.getcwd(), 'model_weights', 'model_epoch_4.pt') # replace starting epoch
+    #continue_training: str = os.path.join(os.getcwd(), 'model_weights', 'model_epoch_3.pt') # replace starting epoch
     
 
 @dataclass
@@ -94,13 +95,16 @@ def init_training(training_hp: TrainingHyperParams,
     print("Initializing training...")
 
     # get dataloaders
-    train_dataloader, valid_dataloader = make_dataloaders(tokenizer=TOKENIZER, device=device)
+    train_dataloader, valid_dataloader, vocab = make_dataloaders(device=device)
     
-
+    PAD_ID_EN = vocab.en_token_to_id["<PAD>"]
+    PAD_ID_FR = vocab.fr_token_to_id["<PAD>"]
+    src_vocab_size = len(vocab.en_token_to_id)
+    tgt_vocab_size = len(vocab.fr_token_to_id)
     print("Initializing new model...")
     model = make_model(
-        src_vocab=VOCAB_SIZE,
-        tgt_vocab=VOCAB_SIZE,
+        src_vocab=src_vocab_size,
+        tgt_vocab=tgt_vocab_size,
         n_blocks=model_hp.n_blocks,
         d_model=model_hp.d_model,
         d_ff=model_hp.d_ff,
@@ -118,8 +122,8 @@ def init_training(training_hp: TrainingHyperParams,
 
     # initialize loss
     label_smoothing = LabelSmoothing(
-        vocab_size=VOCAB_SIZE,
-        padding_idx=PAD_ID,
+        vocab_size=tgt_vocab_size,
+        padding_idx=PAD_ID_FR,
         smoothing=0.1)
     criterion = LossWrapper(model.generator, label_smoothing)
 
@@ -299,8 +303,8 @@ def load_trained_model(training_hp=None, model_hp=None, model_path=None):
 
     # make model
     model = make_model(
-        src_vocab=VOCAB_SIZE,
-        tgt_vocab=VOCAB_SIZE,
+        src_vocab=src_vocab_size,
+        tgt_vocab=tgt_vocab_size,
         n_blocks=model_hp.n_blocks,
         d_model=model_hp.d_model,
         d_ff=model_hp.d_ff,
