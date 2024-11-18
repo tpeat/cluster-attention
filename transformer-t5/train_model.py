@@ -15,7 +15,7 @@ tokenizer = AutoTokenizer.from_pretrained("google-t5/t5-base")
 model = AutoModelForSeq2SeqLM.from_pretrained("google-t5/t5-base")
 model.generation_config.max_new_tokens = 128
 
-def preprocess_function(examples, prefix,):
+def preprocess_function(examples):
   inputs = [prefix + example[source_lang] for example in examples["translation"]]
   targets = [example[target_lang] for example in examples["translation"]]
   model_inputs = tokenizer(inputs, text_target=targets, max_length=128, truncation=True)
@@ -69,7 +69,7 @@ def train():
         args=training_args,
         train_dataset=tokenized_books["train"],
         eval_dataset=tokenized_books["test"],
-        tokenizer=tokenizer,
+        processing_class=tokenizer.__class__,
         data_collator=data_collator,
         compute_metrics=compute_metrics,
     )
