@@ -1,4 +1,4 @@
-# CHAI
+# Experiment 2: CHAI
 Experiment inspired by CHAI paper: https://arxiv.org/abs/2403.08058. Involves clustering attention heads post training to improve space savings for model inference.
 
 ### Files
