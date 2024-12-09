@@ -7,6 +7,13 @@ clusters without repeated $O(n^2)$ operations.
 
 [Full report](NLP_Project.pdf)
 
+# Envrionment Set Up
+
+1.  ```conda env create -f environment.yml```
+2. ```conda activate torch```
+
+Note: Tested using PACE (linux-64), may need to make change for other architectures
+
 # Baseline
 
 For our baseline transfomer, we used google's T5 base model.
