@@ -7,6 +7,13 @@ clusters without repeated $O(n^2)$ operations.
 
 [Full report](NLP_Project.pdf)
 
+# Baseline
+
+For our baseline transfomer, we used google's T5 base model.
+
+To train and evaluate the baseline model:
+* Run ```python train_model.py```
+
 # Experiment 1: Token Merging
 
 In this experiment, we tested the impact of merging tokens with similar information in the encoder block. We modified Google's t5 base transformer. All experimental files are located in the TokenMerging folder. 
