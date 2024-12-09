@@ -12,7 +12,8 @@ target_lang = "fr"
 prefix = "translate English to French: "
 
 tokenizer = AutoTokenizer.from_pretrained("google-t5/t5-base")
-model = AutoModelForSeq2SeqLM.from_pretrained("google-t5/t5-base")
+clustered_weights_path = "modified_checkpoint_per_cluster_80"
+model = AutoModelForSeq2SeqLM.from_pretrained(clustered_weights_path)
 model.generation_config.max_new_tokens = 128
 
 def preprocess_function(examples):
@@ -77,5 +78,27 @@ def train():
     trainer.train()
 
 
+def evaluate():
+    training_args = Seq2SeqTrainingArguments(
+        output_dir="evaluation_results",
+        per_device_eval_batch_size=128,
+        predict_with_generate=True,
+        fp16=True,
+        do_train=False,  # Disable training
+        do_eval=True     # Enable evaluation
+    )
+
+    trainer = Seq2SeqTrainer(
+        model=model,
+        args=training_args,
+        eval_dataset=tokenized_books["test"],
+        data_collator=data_collator,
+        compute_metrics=compute_metrics,
+    )
+
+    eval_results = trainer.evaluate()
+    print("Evaluation results:", eval_results)
+
 if __name__ == "__main__":
-    train()
+    #train()
+    evaluate()
