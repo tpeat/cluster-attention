@@ -1,7 +1,7 @@
 # Simulating Attention Dynamics
 
 <p align="center">
-  <img src="assets/sphere_beta=9.gif" alt="Attention Dynamics Visualization">
+  <img src="assets/sphere_beta=9.gif" alt="Attention Dynamics Visualization", width="400">
 </p>
 
 ## Generate Token Similarity Histogram
@@ -18,7 +18,7 @@ python create_corr_histograms.py
 ## Visualize the Attention Head Correlation and Token Activations
 
 <p align="center">
-  <img src="assets/layer_26_heatmaps.png" alt="Heapmaps">
+  <img src="assets/layer_26_heatmaps.png" alt="Heapmaps", width="400">
 </p>
 
 ```python
@@ -75,7 +75,7 @@ python particle_simulation.py
 ## Visualize T5 Eigenvalue Spectra
 
 <p align="center">
-  <img src="assets/encoder_layer_0_eigenvalues_grid.pdf" alt="T5 Eigenvalues">
+  <img src="assets/encoder_layer_0_eigenvalues_grid.png" alt="T5 Eigenvalues", width="400">
 </p>
 
 
