@@ -12,13 +12,13 @@ python create_corr_histograms.py
 ```
 
 <p align="center">
-  <img src="assets/albert_histos.gif" alt="ALBERT Token Similarity Histogram">
+  <img src="assets/albert_histos.gif" alt="ALBERT Token Similarity Histogram", width="400">
 </p>
 
 ## Visualize the Attention Head Correlation and Token Activations
 
 <p align="center">
-  <img src="assets/layer_26_heatmaps.png" alt="Heapmaps", width="400">
+  <img src="assets/layer_26_heatmaps.png" alt="Heapmaps", width="600">
 </p>
 
 ```python
